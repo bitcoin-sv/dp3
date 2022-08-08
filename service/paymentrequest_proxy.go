@@ -6,6 +6,7 @@ import (
 	"net/url"
 
 	"github.com/bitcoin-sv/dpp-proxy/config"
+	"github.com/libsv/go-bk/envelope"
 	"github.com/libsv/go-dpp"
 	"github.com/pkg/errors"
 	validator "github.com/theflyingcodr/govalidator"
@@ -58,5 +59,18 @@ func (p *paymentTermsProxy) PaymentTerms(ctx context.Context, args dpp.PaymentTe
 		resp.PaymentURL = u.String()
 	}
 
+	return resp, nil
+}
+
+// PaymentTerms will call to the data layer to return a full payment request.
+func (p *paymentTermsProxy) PaymentTermsSecure(ctx context.Context, args dpp.PaymentTermsArgs) (*envelope.JSONEnvelope, error) {
+	if err := validator.New().
+		Validate("paymentID", validator.NotEmpty(args.PaymentID)); err.Err() != nil {
+		return nil, err
+	}
+	resp, err := p.preqRdr.PaymentTermsSecure(ctx, args)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to read payment request for paymentID %s", args.PaymentID)
+	}
 	return resp, nil
 }

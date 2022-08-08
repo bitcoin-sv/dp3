@@ -17,13 +17,13 @@ import (
 
 // Routes contain the unique keys for socket messages used in the payment protocol.
 const (
-	RoutePayment                = "payment"
-	RoutePaymentACK             = "payment.ack"
-	RoutePaymentError           = "payment.error"
-	RouteProofCreate            = "proof.create"
-	RoutePaymentTermsCreate   	= "paymentterms.create"
-	RoutePaymentTermsResponse 	= "paymentterms.response"
-	RoutePaymentTermsError    	= "paymentterms.error"
+	RoutePayment              = "payment"
+	RoutePaymentACK           = "payment.ack"
+	RoutePaymentError         = "payment.error"
+	RouteProofCreate          = "proof.create"
+	RoutePaymentTermsCreate   = "paymentterms.create"
+	RoutePaymentTermsResponse = "paymentterms.response"
+	RoutePaymentTermsError    = "paymentterms.error"
 
 	appID = "dpp"
 )
@@ -72,6 +72,41 @@ func (p *payd) PaymentTerms(ctx context.Context, args dpp.PaymentTermsArgs) (*dp
 		var pr *dpp.PaymentTerms
 		if err := resp.Bind(&pr); err != nil {
 			return nil, errors.Wrap(err, "failed to bind payment request response")
+		}
+		return pr, nil
+	case RoutePaymentTermsError:
+		var clientErr server.ClientError
+		if err := resp.Bind(&clientErr); err != nil {
+			return nil, errors.Wrap(err, "failed to bind error response")
+		}
+		return nil, toLathosErr(clientErr)
+	}
+
+	return nil, fmt.Errorf("unexpected response key '%s'", resp.Key())
+}
+
+// PaymentTerms will send a socket request to a payd client for a payment request.
+// It will wait on a response before returnign the payment request.
+func (p *payd) PaymentTermsSecure(ctx context.Context, args dpp.PaymentTermsArgs) (*envelope.JSONEnvelope, error) {
+	msg := sockets.NewMessage(RoutePaymentTermsCreate, "", args.PaymentID)
+	msg.AppID = appID
+	msg.CorrelationID = uuid.NewString()
+
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+
+	resp, err := p.s.BroadcastAwait(ctx, args.PaymentID, msg)
+	if err != nil {
+		if errors.Is(err, sockets.ErrChannelNotFound) {
+			return nil, errs.NewErrNotFound("N00001", "invoice not found")
+		}
+		return nil, errors.Wrap(err, "failed to broadcast message for payment terms (secure)")
+	}
+	switch resp.Key() {
+	case RoutePaymentTermsResponse:
+		var pr *envelope.JSONEnvelope
+		if err := resp.Bind(&pr); err != nil {
+			return nil, errors.Wrap(err, "failed to bind payment terms (secure) response")
 		}
 		return pr, nil
 	case RoutePaymentTermsError:

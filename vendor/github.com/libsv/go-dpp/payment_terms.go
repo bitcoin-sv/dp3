@@ -2,6 +2,8 @@ package dpp
 
 import (
 	"context"
+
+	"github.com/libsv/go-bk/envelope"
 	"github.com/libsv/go-dpp/modes/hybridmode"
 	"github.com/libsv/go-dpp/nativetypes"
 )
@@ -50,7 +52,7 @@ type PaymentTerms struct {
 	Beneficiary *Beneficiary `json:"beneficiary,omitempty"`
 	// PaymentTermsModes TSC payment messages specified by ID (and well defined) messages customer can choose to pay
 	// A key-value map. required field but not if legacy BIP270 outputs are provided
-	Modes *PaymentTermsModes`json:"modes"`
+	Modes *PaymentTermsModes `json:"modes"`
 }
 
 // PaymentTermsArgs are request arguments that can be passed to the service.
@@ -68,4 +70,5 @@ type PaymentTermsService interface {
 // PaymentTermsReader will return a new payment request.
 type PaymentTermsReader interface {
 	PaymentTerms(ctx context.Context, args PaymentTermsArgs) (*PaymentTerms, error)
+	PaymentTermsSecure(ctx context.Context, args PaymentTermsArgs) (*envelope.JSONEnvelope, error)
 }

@@ -5,6 +5,7 @@ package mocks
 
 import (
 	"context"
+	"github.com/libsv/go-bk/envelope"
 	"github.com/libsv/go-dpp"
 	"sync"
 )
@@ -15,22 +16,28 @@ var _ dpp.PaymentTermsService = &PaymentTermsServiceMock{}
 
 // PaymentTermsServiceMock is a mock implementation of dpp.PaymentTermsService.
 //
-// 	func TestSomethingThatUsesPaymentTermsService(t *testing.T) {
+//	func TestSomethingThatUsesPaymentTermsService(t *testing.T) {
 //
-// 		// make and configure a mocked dpp.PaymentTermsService
-// 		mockedPaymentTermsService := &PaymentTermsServiceMock{
-// 			PaymentTermsFunc: func(ctx context.Context, args dpp.PaymentTermsArgs) (*dpp.PaymentTerms, error) {
-// 				panic("mock out the PaymentTerms method")
-// 			},
-// 		}
+//		// make and configure a mocked dpp.PaymentTermsService
+//		mockedPaymentTermsService := &PaymentTermsServiceMock{
+//			PaymentTermsFunc: func(ctx context.Context, args dpp.PaymentTermsArgs) (*dpp.PaymentTerms, error) {
+//				panic("mock out the PaymentTerms method")
+//			},
+//			PaymentTermsSecureFunc: func(ctx context.Context, args dpp.PaymentTermsArgs) (*envelope.JSONEnvelope, error) {
+//				panic("mock out the PaymentTermsSecure method")
+//			},
+//		}
 //
-// 		// use mockedPaymentTermsService in code that requires dpp.PaymentTermsService
-// 		// and then make assertions.
+//		// use mockedPaymentTermsService in code that requires dpp.PaymentTermsService
+//		// and then make assertions.
 //
-// 	}
+//	}
 type PaymentTermsServiceMock struct {
 	// PaymentTermsFunc mocks the PaymentTerms method.
 	PaymentTermsFunc func(ctx context.Context, args dpp.PaymentTermsArgs) (*dpp.PaymentTerms, error)
+
+	// PaymentTermsSecureFunc mocks the PaymentTermsSecure method.
+	PaymentTermsSecureFunc func(ctx context.Context, args dpp.PaymentTermsArgs) (*envelope.JSONEnvelope, error)
 
 	// calls tracks calls to the methods.
 	calls struct {
@@ -41,8 +48,16 @@ type PaymentTermsServiceMock struct {
 			// Args is the args argument value.
 			Args dpp.PaymentTermsArgs
 		}
+		// PaymentTermsSecure holds details about calls to the PaymentTermsSecure method.
+		PaymentTermsSecure []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// Args is the args argument value.
+			Args dpp.PaymentTermsArgs
+		}
 	}
-	lockPaymentTerms sync.RWMutex
+	lockPaymentTerms       sync.RWMutex
+	lockPaymentTermsSecure sync.RWMutex
 }
 
 // PaymentTerms calls PaymentTermsFunc.
@@ -65,7 +80,8 @@ func (mock *PaymentTermsServiceMock) PaymentTerms(ctx context.Context, args dpp.
 
 // PaymentTermsCalls gets all the calls that were made to PaymentTerms.
 // Check the length with:
-//     len(mockedPaymentTermsService.PaymentTermsCalls())
+//
+//	len(mockedPaymentTermsService.PaymentTermsCalls())
 func (mock *PaymentTermsServiceMock) PaymentTermsCalls() []struct {
 	Ctx  context.Context
 	Args dpp.PaymentTermsArgs
@@ -77,5 +93,41 @@ func (mock *PaymentTermsServiceMock) PaymentTermsCalls() []struct {
 	mock.lockPaymentTerms.RLock()
 	calls = mock.calls.PaymentTerms
 	mock.lockPaymentTerms.RUnlock()
+	return calls
+}
+
+// PaymentTermsSecure calls PaymentTermsSecureFunc.
+func (mock *PaymentTermsServiceMock) PaymentTermsSecure(ctx context.Context, args dpp.PaymentTermsArgs) (*envelope.JSONEnvelope, error) {
+	if mock.PaymentTermsSecureFunc == nil {
+		panic("PaymentTermsServiceMock.PaymentTermsSecureFunc: method is nil but PaymentTermsService.PaymentTermsSecure was just called")
+	}
+	callInfo := struct {
+		Ctx  context.Context
+		Args dpp.PaymentTermsArgs
+	}{
+		Ctx:  ctx,
+		Args: args,
+	}
+	mock.lockPaymentTermsSecure.Lock()
+	mock.calls.PaymentTermsSecure = append(mock.calls.PaymentTermsSecure, callInfo)
+	mock.lockPaymentTermsSecure.Unlock()
+	return mock.PaymentTermsSecureFunc(ctx, args)
+}
+
+// PaymentTermsSecureCalls gets all the calls that were made to PaymentTermsSecure.
+// Check the length with:
+//
+//	len(mockedPaymentTermsService.PaymentTermsSecureCalls())
+func (mock *PaymentTermsServiceMock) PaymentTermsSecureCalls() []struct {
+	Ctx  context.Context
+	Args dpp.PaymentTermsArgs
+} {
+	var calls []struct {
+		Ctx  context.Context
+		Args dpp.PaymentTermsArgs
+	}
+	mock.lockPaymentTermsSecure.RLock()
+	calls = mock.calls.PaymentTermsSecure
+	mock.lockPaymentTermsSecure.RUnlock()
 	return calls
 }
