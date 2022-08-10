@@ -17,77 +17,110 @@ import (
 type Config struct {
 	// The url pointing to API definition (normally swagger.json or swagger.yaml). Default is `mockedSwag.json`.
 	URL                  string
-	DeepLinking          bool
 	DocExpansion         string
 	DomID                string
 	InstanceName         string
+	DeepLinking          bool
 	PersistAuthorization bool
+
+	// The information for OAuth2 integration, if any.
+	OAuth *OAuthConfig
+}
+
+// OAuthConfig stores configuration for Swagger UI OAuth2 integration. See
+// https://swagger.io/docs/open-source-tools/swagger-ui/usage/oauth2/ for further details.
+type OAuthConfig struct {
+	// The ID of the client sent to the OAuth2 IAM provider.
+	ClientId string
+
+	// The OAuth2 realm that the client should operate in. If not applicable, use empty string.
+	Realm string
+
+	// The name to display for the application in the authentication popup.
+	AppName string
 }
 
 // URL presents the url pointing to API definition (normally swagger.json or swagger.yaml).
-func URL(url string) func(c *Config) {
+func URL(url string) func(*Config) {
 	return func(c *Config) {
 		c.URL = url
 	}
 }
 
 // DeepLinking true, false.
-func DeepLinking(deepLinking bool) func(c *Config) {
+func DeepLinking(deepLinking bool) func(*Config) {
 	return func(c *Config) {
 		c.DeepLinking = deepLinking
 	}
 }
 
 // DocExpansion list, full, none.
-func DocExpansion(docExpansion string) func(c *Config) {
+func DocExpansion(docExpansion string) func(*Config) {
 	return func(c *Config) {
 		c.DocExpansion = docExpansion
 	}
 }
 
 // DomID #swagger-ui.
-func DomID(domID string) func(c *Config) {
+func DomID(domID string) func(*Config) {
 	return func(c *Config) {
 		c.DomID = domID
 	}
 }
 
-// InstanceName specified swag instance name
-func InstanceName(instanceName string) func(c *Config) {
+// InstanceName specified swag instance name.
+func InstanceName(instanceName string) func(*Config) {
 	return func(c *Config) {
 		c.InstanceName = instanceName
 	}
 }
 
-// If set to true, it persists authorization data and it would not be lost on browser close/refresh
-// Defaults to false
-func PersistAuthorization(persistAuthorization bool) func(c *Config) {
+// PersistAuthorization Persist authorization information over browser close/refresh.
+// Defaults to false.
+func PersistAuthorization(persistAuthorization bool) func(*Config) {
 	return func(c *Config) {
 		c.PersistAuthorization = persistAuthorization
 	}
+}
+
+func OAuth(config *OAuthConfig) func(*Config) {
+	return func(c *Config) {
+		c.OAuth = config
+	}
+}
+
+func newConfig(configFns ...func(*Config)) *Config {
+	config := Config{
+		URL:                  "doc.json",
+		DocExpansion:         "list",
+		DomID:                "swagger-ui",
+		InstanceName:         "swagger",
+		DeepLinking:          true,
+		PersistAuthorization: false,
+	}
+
+	for _, fn := range configFns {
+		fn(&config)
+	}
+
+	if config.InstanceName == "" {
+		config.InstanceName = swag.Name
+	}
+
+	return &config
 }
 
 // WrapHandler wraps swaggerFiles.Handler and returns echo.HandlerFunc
 var WrapHandler = EchoWrapHandler()
 
 // EchoWrapHandler wraps `http.Handler` into `echo.HandlerFunc`.
-func EchoWrapHandler(configFns ...func(c *Config)) echo.HandlerFunc {
+func EchoWrapHandler(options ...func(*Config)) echo.HandlerFunc {
 	var once sync.Once
 
-	config := &Config{
-		URL:          "doc.json",
-		DeepLinking:  true,
-		DocExpansion: "list",
-		DomID:        "#swagger-ui",
-	}
-
-	for _, configFn := range configFns {
-		configFn(config)
-	}
+	config := newConfig(options...)
 
 	// create a template with name
-	t := template.New("swagger_index.html")
-	index, _ := t.Parse(indexTemplate)
+	index, _ := template.New("swagger_index.html").Parse(indexTemplate)
 
 	var re = regexp.MustCompile(`^(.*/)([^?].*)?[?|.]*$`)
 
@@ -97,6 +130,10 @@ func EchoWrapHandler(configFns ...func(c *Config)) echo.HandlerFunc {
 	}
 
 	return func(c echo.Context) error {
+		if c.Request().Method != http.MethodGet {
+			return echo.NewHTTPError(http.StatusMethodNotAllowed, http.StatusText(http.StatusMethodNotAllowed))
+		}
+
 		matches := re.FindStringSubmatch(c.Request().RequestURI)
 		path := matches[2]
 
@@ -125,7 +162,7 @@ func EchoWrapHandler(configFns ...func(c *Config)) echo.HandlerFunc {
 
 		switch path {
 		case "":
-			c.Redirect(301, h.Prefix+"index.html")
+			_ = c.Redirect(http.StatusMovedPermanently, h.Prefix+"index.html")
 		case "index.html":
 			_ = index.Execute(c.Response().Writer, config)
 		case "doc.json":
@@ -151,7 +188,6 @@ const indexTemplate = `<!-- HTML for static distribution bundle build -->
 <head>
   <meta charset="UTF-8">
   <title>Swagger UI</title>
-  <link href="https://fonts.googleapis.com/css?family=Open+Sans:400,700|Source+Code+Pro:300,600|Titillium+Web:400,600,700" rel="stylesheet">
   <link rel="stylesheet" type="text/css" href="./swagger-ui.css" >
   <link rel="icon" type="image/png" href="./favicon-32x32.png" sizes="32x32" />
   <link rel="icon" type="image/png" href="./favicon-16x16.png" sizes="16x16" />
@@ -212,7 +248,7 @@ const indexTemplate = `<!-- HTML for static distribution bundle build -->
   </defs>
 </svg>
 
-<div id="swagger-ui"></div>
+<div id="{{.DomID}}"></div>
 
 <script src="./swagger-ui-bundle.js"> </script>
 <script src="./swagger-ui-standalone-preset.js"> </script>
@@ -224,7 +260,7 @@ window.onload = function() {
     deepLinking: {{.DeepLinking}},
     docExpansion: "{{.DocExpansion}}",
     persistAuthorization: {{.PersistAuthorization}},
-    dom_id: "{{.DomID}}",
+    dom_id: "#{{.DomID}}",
     validatorUrl: null,
     presets: [
       SwaggerUIBundle.presets.apis,
@@ -235,6 +271,15 @@ window.onload = function() {
     ],
     layout: "StandaloneLayout"
   })
+
+  {{if .OAuth}}
+  ui.initOAuth({
+    clientId: "{{.OAuth.ClientId}}",
+    realm: "{{.OAuth.Realm}}",
+    appName: "{{.OAuth.AppName}}"
+  })
+  {{end}}
+
   window.ui = ui
 }
 </script>
