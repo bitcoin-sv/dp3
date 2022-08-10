@@ -1,11 +1,9 @@
 # DPP Proxy
 
-[![Release](https://img.shields.io/github/release-pre/bitcoinsv/dpp-proxy.svg?logo=github&style=flat&v=1)](https://github.com/libsv/go-dpp/releases)
-[![Build Status](https://img.shields.io/github/workflow/status/libsv/go-dpp-proxy/run-go-tests?logo=github&v=3)](https://github.com/libsv/go-dpp/actions)
-[![Report](https://goreportcard.com/badge/github.com/libsv/go-dpp?style=flat&v=1)](https://goreportcard.com/report/github.com/libsv/go-dpp)
-[![Go](https://img.shields.io/github/go-mod/go-version/libsv/go-dpp-proxy?v=1)](https://golang.org/)
-[![Sponsor](https://img.shields.io/badge/sponsor-libsv-181717.svg?logo=github&style=flat&v=3)](https://github.com/sponsors/libsv)
-[![Donate](https://img.shields.io/badge/donate-bitcoin-ff9900.svg?logo=bitcoin&style=flat&v=3)](https://gobitcoinsv.com/#sponsor)
+[![Release](https://img.shields.io/github/release-pre/bitcoin-sv/dpp-proxy.svg?logo=github&style=flat&v=1)](https://github.com/bitcoin-sv/dpp-proxy/releases)
+[![Build Status](https://img.shields.io/github/workflow/status/bitcoin-sv/dpp-proxy/Go?logo=github&v=3)](https://github.com/bitcoin-sv/dpp-proxy/actions)
+[![Report](https://goreportcard.com/badge/github.com/bitcoin-sv/dpp-proxy?style=flat&v=1)](https://goreportcard.com/report/github.com/bitcoin-sv/dpp-proxy)
+[![Go](https://img.shields.io/github/go-mod/go-version/bitcoin-sv/dpp-proxy?v=1)](https://golang.org/)
 
 The Direct Payment Protocol (DPP - previously BIP270) Proxy, or dpp-proxy, is a basic reference implementation of a Direct Payment Protocol Proxy Server. This proxy service is used in order for wallets that are not directly accessible on the public internet to be able to be contacted through this proxy server.
 
