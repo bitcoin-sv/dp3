@@ -9,7 +9,7 @@ require (
 	github.com/labstack/echo/v4 v4.7.2
 	github.com/libsv/go-bc v0.1.10
 	github.com/libsv/go-bk v0.1.6
-	github.com/libsv/go-bt/v2 v2.1.0-beta.2
+	github.com/libsv/go-bt/v2 v2.1.0-beta.4
 	github.com/libsv/go-dpp v0.1.11
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.12.2
