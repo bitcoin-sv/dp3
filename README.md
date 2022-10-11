@@ -9,7 +9,7 @@
 
 The Direct Payment Protocol (DPP - previously BIP270) Proxy, or dpp-proxy, is a basic reference implementation of a Direct Payment Protocol Proxy Server. This proxy service is used in order for wallets that are not directly accessible on the public internet to be able to be contacted through this proxy server.
 
-This is written in go and integrates with a wallet running the Payment Protocol PayD Interface.
+This is written in go and integrates with any wallet that connects to its APIs.
 
 ## Exploring Endpoints
 
@@ -46,15 +46,6 @@ Values can also be passed at build time to provide information such as build inf
 | --------- | --------------------------------------------------------------------- | ------- |
 | LOG_LEVEL | Level of logging we want within the server (debug, error, warn, info) | info    |
 
-### PayD Wallet
-
-| Key         | Description                                              | Default |
-| ----------- | -------------------------------------------------------- | ------- |
-| PAYD_HOST   | Host for the wallet we are connecting to                 | payd    |
-| PAYD_PORT   | Port the PayD wallet is listening on                     | :8443   |
-| PAYD_SECURE | If true the dpp-proxy server will validate the wallet TLS certs | false   |
-| PAYD_NOOP   | If true we will use a dummy data store in place of payd  | true    |
-
 ## Working with dpp-proxy
 
 There are a set of makefile commands listed under the [Makefile](Makefile) which give some useful shortcuts when working
@@ -66,7 +57,7 @@ Some of the more common commands are listed below:
 
 `make build-image` - builds a local docker image, useful when testing dpp-proxy in docker.
 
-`make run-compose` - runs dpp-proxy in compose, a reference PayD wallet will be added to compose soon NOTE the above command will need ran first.
+`make run-compose` - runs dpp-proxy in compose.
 
 ### Rebuild on code change
 

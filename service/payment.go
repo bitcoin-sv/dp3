@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-
 	"github.com/bitcoin-sv/dpp-proxy/log"
 	"github.com/libsv/go-dpp"
 )
@@ -35,10 +34,7 @@ func (p *payment) PaymentCreate(ctx context.Context, args dpp.PaymentCreateArgs,
 	ack, err := p.paymentWtr.PaymentCreate(ctx, args, req)
 	if err != nil {
 		p.l.Error(err, "failed to create payment")
-		return &dpp.PaymentACK{
-			Memo:  err.Error(),
-			Error: 1,
-		}, err
+		return nil, err
 	}
 	return ack, nil
 }

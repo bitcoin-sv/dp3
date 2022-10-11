@@ -15,19 +15,19 @@ var _ data.HTTPClient = &HTTPClientMock{}
 
 // HTTPClientMock is a mock implementation of data.HTTPClient.
 //
-// 	func TestSomethingThatUsesHTTPClient(t *testing.T) {
+//	func TestSomethingThatUsesHTTPClient(t *testing.T) {
 //
-// 		// make and configure a mocked data.HTTPClient
-// 		mockedHTTPClient := &HTTPClientMock{
-// 			DoFunc: func(ctx context.Context, method string, endpoint string, expStatus int, req interface{}, out interface{}) error {
-// 				panic("mock out the Do method")
-// 			},
-// 		}
+//		// make and configure a mocked data.HTTPClient
+//		mockedHTTPClient := &HTTPClientMock{
+//			DoFunc: func(ctx context.Context, method string, endpoint string, expStatus int, req interface{}, out interface{}) error {
+//				panic("mock out the Do method")
+//			},
+//		}
 //
-// 		// use mockedHTTPClient in code that requires data.HTTPClient
-// 		// and then make assertions.
+//		// use mockedHTTPClient in code that requires data.HTTPClient
+//		// and then make assertions.
 //
-// 	}
+//	}
 type HTTPClientMock struct {
 	// DoFunc mocks the Do method.
 	DoFunc func(ctx context.Context, method string, endpoint string, expStatus int, req interface{}, out interface{}) error
@@ -81,7 +81,8 @@ func (mock *HTTPClientMock) Do(ctx context.Context, method string, endpoint stri
 
 // DoCalls gets all the calls that were made to Do.
 // Check the length with:
-//     len(mockedHTTPClient.DoCalls())
+//
+//	len(mockedHTTPClient.DoCalls())
 func (mock *HTTPClientMock) DoCalls() []struct {
 	Ctx       context.Context
 	Method    string

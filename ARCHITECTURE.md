@@ -23,7 +23,7 @@ It is responsible for validating data and enforcing the protocol rules.
 
 Data stores each have their own top level package, named to match the store.
 
-At the moment there are two supported data stores, noop and payd. The payD store will communicate with a PayD server using Http, additional stores can be added as long as they implement to common interfaces.
+At the moment there is one supported data store, noop. Additional stores can be added as long as they implement to common interfaces.
 
 The data layer knows only about how to interact with the data store to store or retrieve data. This will be called by the service layer, but the service layer doesn't know or care about what data store it is interacting with.
 

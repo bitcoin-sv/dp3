@@ -14,17 +14,17 @@ import (
 const appname = "payment-protocol-rest-server"
 const banner = `
 ====================================================================
-         _         _       _            _            _     
-        /\ \      /\ \    /\ \        /\ \          _\ \   
-       /  \ \    /  \ \   \_\ \      /  \ \        /\__ \  
-      / /\ \ \  / /\ \ \  /\__ \    / /\ \ \      / /_ \_\ 
-     / / /\ \_\/ / /\ \_\/ /_ \ \  / / /\ \ \    / / /\/_/ 
-    / / /_/ / / / /_/ / / / /\ \ \/ / /  \ \_\  / / /      
-   / / /__\/ / / /__\/ / / /  \/_/ / /    \/_/ / / /       
-  / / /_____/ / /_____/ / /     / / /         / / / ____   
- / / /     / / /     / / /     / / /________ / /_/_/ ___/\ 
-/ / /     / / /     /_/ /     / / /_________/_______/\__\/ 
-\/_/      \/_/      \_\/      \/____________\_______\/     
+         _         _       _            _            _
+        /\ \      /\ \    /\ \        /\ \          _\ \
+       /  \ \    /  \ \   \_\ \      /  \ \        /\__ \
+      / /\ \ \  / /\ \ \  /\__ \    / /\ \ \      / /_ \_\
+     / / /\ \_\/ / /\ \_\/ /_ \ \  / / /\ \ \    / / /\/_/
+    / / /_/ / / / /_/ / / / /\ \ \/ / /  \ \_\  / / /
+   / / /__\/ / / /__\/ / / /  \/_/ / /    \/_/ / / /
+  / / /_____/ / /_____/ / /     / / /         / / / ____
+ / / /     / / /     / / /     / / /________ / /_/_/ ___/\
+/ / /     / / /     /_/ /     / / /_________/_______/\__\/
+\/_/      \/_/      \_\/      \/____________\_______\/
 
 ====================================================================
 `
@@ -38,8 +38,8 @@ const banner = `
 // @license.url https://github.com/libsv/go-payment_protocol/blob/master/LICENSE
 // @host localhost:8445
 // @schemes:
-//	- http
-//	- https
+//   - http
+//   - https
 func main() {
 	println("\033[32m" + banner + "\033[0m")
 	config.SetupDefaults()
@@ -47,8 +47,8 @@ func main() {
 		WithServer().
 		WithDeployment(appname).
 		WithLog().
-		WithPayD().
 		WithSockets().
+		WithPayD().
 		WithTransports().
 		Load()
 	log := log.NewZero(cfg.Logging)
@@ -57,7 +57,7 @@ func main() {
 		log.Fatal(err, "config error")
 	}
 
-	e := internal.SetupEcho(cfg,log)
+	e := internal.SetupEcho(cfg, log)
 
 	if cfg.Server.SwaggerEnabled {
 		internal.SetupSwagger(*cfg.Server, e)
@@ -65,8 +65,6 @@ func main() {
 
 	// setup transports
 	switch cfg.Transports.Mode {
-	case config.TransportModeHTTP:
-		internal.SetupHTTPEndpoints(internal.SetupDeps(*cfg, log), e)
 	case config.TransportModeSocket:
 		s := internal.SetupSockets(*cfg.Sockets, e)
 		internal.SetupSocketMetrics(s)

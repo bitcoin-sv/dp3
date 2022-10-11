@@ -18,10 +18,6 @@ const (
 	EnvCommit                      = "env.commit"
 	EnvBuildDate                   = "env.builddate"
 	EnvLogLevel                    = "log.level"
-	EnvPaydHost                    = "payd.host"
-	EnvPaydPort                    = "payd.port"
-	EnvPaydSecure                  = "payd.secure"
-	EnvPaydCertPath                = "payd.cert.path"
 	EnvPaydNoop                    = "payd.noop"
 	EnvSocketChannelTimeoutSeconds = "socket.channel.timeoutseconds"
 	EnvSocketMaxMessageBytes       = "socket.maxmessage.bytes"
@@ -33,7 +29,6 @@ const (
 	LogWarn  = "warn"
 
 	TransportModeHybrid = "hybrid"
-	TransportModeHTTP   = "http"
 	TransportModeSocket = "socket"
 )
 
@@ -77,7 +72,7 @@ type Logging struct {
 type Server struct {
 	Port     string
 	Hostname string
-	// FQDN - fully qualified domain name, used to form the paymentRequest
+	// FQDN - fully qualified domain name, used to form the PaymentTerms
 	// payment URL as this may be different from the hostname + port.
 	FQDN string
 	// SwaggerEnabled if true we will include an endpoint to serve swagger documents.
@@ -85,15 +80,9 @@ type Server struct {
 	SwaggerHost    string
 }
 
-// PayD is used to setup connection to a payd instance.
-// In this case, we connect to only one merchant wallet
-// implementors may need to connect to more.
+// PayD is for mock testing.
 type PayD struct {
-	Host            string
-	Port            string
-	Secure          bool
-	CertificatePath string
-	Noop            bool
+	Noop bool
 }
 
 // Socket contains config items for a socket server.

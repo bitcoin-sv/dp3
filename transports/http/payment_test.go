@@ -4,8 +4,10 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
-	"fmt"
+	"github.com/bitcoin-sv/dpp-proxy/log"
+	"github.com/bitcoin-sv/dpp-proxy/transports/client_errors"
+	"github.com/bitcoin-sv/dpp-proxy/transports/http/middleware"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -22,45 +24,36 @@ func TestPaymentHandler_CreatedPayment(t *testing.T) {
 		reqBody           dpp.Payment
 		paymentID         string
 		expResponse       dpp.PaymentACK
+		expTextResponse   string
 		expStatusCode     int
 		expErr            error
 	}{
 		"successful post": {
 			paymentCreateFunc: func(ctx context.Context, args dpp.PaymentCreateArgs, req dpp.Payment) (*dpp.PaymentACK, error) {
-				return &dpp.PaymentACK{
-					Memo: fmt.Sprintf("payment %s", args.PaymentID),
-				}, nil
+				return &dpp.PaymentACK{}, nil
 			},
 			paymentID: "abc123",
 			reqBody:   dpp.Payment{},
-			expResponse: dpp.PaymentACK{
-				Memo: "payment abc123",
-			},
+			expResponse: dpp.PaymentACK{},
 			expStatusCode: http.StatusCreated,
 		},
 		"error response returns 422": {
 			paymentCreateFunc: func(ctx context.Context, args dpp.PaymentCreateArgs, req dpp.Payment) (*dpp.PaymentACK, error) {
-				return &dpp.PaymentACK{
-					Memo:  "failed",
-					Error: 1,
-				}, nil
+				return nil, client_errors.NewErrUnprocessable("422", "failed")
 			},
-			paymentID: "abc123",
-			reqBody:   dpp.Payment{},
-			expResponse: dpp.PaymentACK{
-				Error: 1,
-				Memo:  "failed",
-			},
-			expStatusCode: http.StatusUnprocessableEntity,
+			paymentID:       "abc123",
+			reqBody:         dpp.Payment{},
+			expStatusCode:   http.StatusUnprocessableEntity,
+			expTextResponse: "\"failed\"\n",
 		},
 		"payment create service error is handled": {
 			paymentCreateFunc: func(ctx context.Context, args dpp.PaymentCreateArgs, req dpp.Payment) (*dpp.PaymentACK, error) {
-				return nil, errors.New("ohnonono")
+				return nil, client_errors.NewErrBadRequest("400", "ohnonono")
 			},
 			paymentID:     "abc123",
 			reqBody:       dpp.Payment{},
-			expStatusCode: http.StatusInternalServerError,
-			expErr:        errors.New("ohnonono"),
+			expStatusCode: http.StatusBadRequest,
+			expTextResponse: "\"ohnonono\"\n",
 		},
 	}
 
@@ -87,6 +80,8 @@ func TestPaymentHandler_CreatedPayment(t *testing.T) {
 			ctx.SetParamValues(test.paymentID)
 
 			err = h.createPayment(ctx)
+			middleware.ErrorHandler(log.Noop{})(err, ctx)
+
 			if test.expErr != nil {
 				assert.Error(t, err)
 				assert.EqualError(t, test.expErr, err.Error())
@@ -97,10 +92,16 @@ func TestPaymentHandler_CreatedPayment(t *testing.T) {
 			defer response.Body.Close()
 			assert.Equal(t, test.expStatusCode, response.StatusCode)
 
-			var ack dpp.PaymentACK
-			assert.NoError(t, json.NewDecoder(response.Body).Decode(&ack))
-
-			assert.Equal(t, test.expResponse, ack)
+			if test.expTextResponse != "" {
+				var bodyData []byte
+				bodyData, err = io.ReadAll(response.Body)
+				assert.Nil(t, err)
+				assert.Equal(t, test.expTextResponse, string(bodyData))
+			} else {
+				var ack dpp.PaymentACK
+				assert.NoError(t, json.NewDecoder(response.Body).Decode(&ack))
+				assert.Equal(t, test.expResponse, ack)
+			}
 		})
 	}
 }

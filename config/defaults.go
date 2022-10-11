@@ -27,16 +27,10 @@ func SetupDefaults() {
 	// Log level defaults
 	viper.SetDefault(EnvLogLevel, "info")
 
-	// PayD wallet Defaults
-	viper.SetDefault(EnvPaydHost, "payd")
-	viper.SetDefault(EnvPaydPort, ":8443")
-	viper.SetDefault(EnvPaydSecure, false)
-	viper.SetDefault(EnvPaydNoop, false)
-
 	// Socket settings
 	viper.SetDefault(EnvSocketChannelTimeoutSeconds, 7200*time.Second) // 2 hrs in seconds
 	viper.SetDefault(EnvSocketMaxMessageBytes, 10000)
 
 	// Transport settings
-	viper.SetDefault(EnvTransportMode, TransportModeHTTP)
+	viper.SetDefault(EnvTransportMode, TransportModeHybrid)
 }

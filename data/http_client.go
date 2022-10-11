@@ -9,9 +9,9 @@ import (
 	"net/http"
 
 	server "github.com/bitcoin-sv/dpp-proxy"
+	"github.com/bitcoin-sv/dpp-proxy/transports/client_errors"
 	"github.com/pkg/errors"
 	validator "github.com/theflyingcodr/govalidator"
-	"github.com/theflyingcodr/lathos/errs"
 )
 
 // HTTPClient defines a simple interface to execute an http request and map the request and response objects.
@@ -82,19 +82,19 @@ func (c *client) handleErr(resp *http.Response, expStatus int) error {
 		if err := json.NewDecoder(resp.Body).Decode(&msg); err != nil {
 			return errors.WithStack(err)
 		}
-		return errs.NewErrNotFound(msg.Code, msg.Message)
+		return client_errors.NewErrNotFound(msg.Code, msg.Message)
 	case http.StatusConflict:
 		var msg server.ClientError
 		if err := json.NewDecoder(resp.Body).Decode(&msg); err != nil {
 			return errors.WithStack(err)
 		}
-		return errs.NewErrDuplicate(msg.Code, msg.Message)
+		return client_errors.NewErrDuplicate(msg.Code, msg.Message)
 	case http.StatusUnprocessableEntity:
 		var msg server.ClientError
 		if err := json.NewDecoder(resp.Body).Decode(&msg); err != nil {
 			return errors.WithStack(err)
 		}
-		return errs.NewErrUnprocessable(msg.Code, msg.Message)
+		return client_errors.NewErrUnprocessable(msg.Code, msg.Message)
 	default:
 		body, _ := ioutil.ReadAll(resp.Body)
 		return fmt.Errorf("error for '%s' '%s'. Status Received : '%d', Status Expected : '%d'. \nBody: %s", resp.Request.Method, resp.Request.RequestURI, resp.StatusCode, expStatus, body)

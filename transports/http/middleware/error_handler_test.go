@@ -8,11 +8,11 @@ import (
 	"testing"
 
 	"github.com/bitcoin-sv/dpp-proxy/log"
+	"github.com/bitcoin-sv/dpp-proxy/transports/client_errors"
 	"github.com/bitcoin-sv/dpp-proxy/transports/http/middleware"
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
 	validator "github.com/theflyingcodr/govalidator"
-	"github.com/theflyingcodr/lathos/errs"
 )
 
 func TestErrorHandler(t *testing.T) {
@@ -32,58 +32,34 @@ func TestErrorHandler(t *testing.T) {
 			},
 			expStatusCode: http.StatusBadRequest,
 		},
-		"internal error 500": {
-			err: errors.New("ahnah"),
-			expResp: map[string]interface{}{
-				"code":    "500",
-				"title":   "Internal Server Error",
-				"message": "ahnah",
-			},
+		"internal server error 500": {
+			err: errors.New("There was an unexpected server error"),
+			expResp: "There was an unexpected server error",
 			expStatusCode: http.StatusInternalServerError,
 		},
 		"not found 404": {
-			err: errs.NewErrNotFound("my 404", "not found"),
-			expResp: map[string]interface{}{
-				"code":    "my 404",
-				"title":   "Not found",
-				"message": "not found",
-			},
+			err: client_errors.NewErrNotFound("404", "invoice not found"),
+			expResp: "invoice not found",
 			expStatusCode: http.StatusNotFound,
 		},
 		"conflict 409": {
-			err: errs.NewErrDuplicate("my 409", "collision"),
-			expResp: map[string]interface{}{
-				"code":    "my 409",
-				"title":   "Item already exists",
-				"message": "collision",
-			},
+			err: client_errors.NewErrDuplicate("409", "item already exists"),
+			expResp: "item already exists",
 			expStatusCode: http.StatusConflict,
 		},
 		"not auth'd 401": {
-			err: errs.NewErrNotAuthenticated("my 401", "will ya login"),
-			expResp: map[string]interface{}{
-				"code":    "my 401",
-				"title":   "Not authenticated",
-				"message": "will ya login",
-			},
+			err: client_errors.NewErrNotAuthenticated("401", "will ya login"),
+			expResp: "will ya login",
 			expStatusCode: http.StatusUnauthorized,
 		},
 		"forbidden 403": {
-			err: errs.NewErrNotAuthorised("my 403", "lol nice try buddy"),
-			expResp: map[string]interface{}{
-				"code":    "my 403",
-				"title":   "Permission denied",
-				"message": "lol nice try buddy",
-			},
+			err: client_errors.NewErrNotAuthorised("403", "lol nice try buddy"),
+			expResp: "lol nice try buddy",
 			expStatusCode: http.StatusForbidden,
 		},
 		"cannot process 422": {
-			err: errs.NewErrUnprocessable("my 422", "what did you even send?"),
-			expResp: map[string]interface{}{
-				"code":    "my 422",
-				"title":   "Unprocessable",
-				"message": "what did you even send?",
-			},
+			err: client_errors.NewErrUnprocessable("422", "what did you even send?"),
+			expResp: "what did you even send?",
 			expStatusCode: http.StatusUnprocessableEntity,
 		},
 	}

@@ -37,9 +37,9 @@
                 ],
                 "responses": {
                     "201": {
-                        "description": "contains outputs, merchant data and expiry information, used by the payee to construct a transaction",
+                        "description": "contains the signed PaymentTerms",
                         "schema": {
-                            "$ref": "#/definitions/dpp.PaymentRequest"
+                            "$ref": "#/definitions/envelope.JSONEnvelope"
                         }
                     },
                     "400": {
@@ -153,83 +153,40 @@
                 ],
                 "responses": {
                     "201": {
-                        "description": ""
+                        "description": "Created"
                     }
                 }
             }
         }
     },
     "definitions": {
-        "bt.FeeQuote": {
-            "type": "object"
-        },
-        "dpp.Merchant": {
-            "type": "object",
-            "properties": {
-                "address": {
-                    "description": "Address is the merchants store / head office address.",
-                    "type": "string",
-                    "example": "1 the street, the town, B1 1AA"
-                },
-                "avatar": {
-                    "description": "AvatarURL displays a canonical url to a merchants avatar.",
-                    "type": "string",
-                    "example": "http://url.com"
-                },
-                "email": {
-                    "description": "Email can be sued to contact the merchant about this transaction.",
-                    "type": "string",
-                    "example": "merchant@m.com"
-                },
-                "extendedData": {
-                    "description": "ExtendedData can be supplied if the merchant wishes to send some arbitrary data back to the wallet.",
-                    "type": "object",
-                    "additionalProperties": true
-                },
-                "name": {
-                    "description": "Name is a human readable string identifying the merchant.",
-                    "type": "string",
-                    "example": "merchant 1"
-                }
-            }
-        },
-        "dpp.Output": {
-            "type": "object",
-            "properties": {
-                "amount": {
-                    "description": "Amount is the number of satoshis to be paid.",
-                    "type": "integer",
-                    "example": 100000
-                },
-                "description": {
-                    "description": "Description, an optional description such as \"tip\" or \"sales tax\". Maximum length is 100 chars.",
-                    "type": "string",
-                    "example": "paymentReference 123456"
-                },
-                "script": {
-                    "description": "Script is a locking script where payment should be sent, formatted as a hexadecimal string.",
-                    "type": "string",
-                    "example": "76a91455b61be43392125d127f1780fb038437cd67ef9c88ac"
-                }
-            }
-        },
         "dpp.PaymentACK": {
             "type": "object",
+            "required": [
+                "modeId"
+            ],
             "properties": {
                 "error": {
                     "description": "A number indicating why the transaction was not accepted. 0 or undefined indicates no error.\nA 1 or any other positive integer indicates an error. The errors are left undefined for now;\nit is recommended only to use “1” and to fill the memo with a textual explanation about why\nthe transaction was not accepted until further numbers are defined and standardised.",
                     "type": "integer"
                 },
-                "id": {
-                    "type": "string"
-                },
                 "memo": {
+                    "description": "Memo may contain information about why there was an error. This field is poorly defined until\nerror reporting is more standardised.",
                     "type": "string"
                 },
-                "peer_channel": {
-                    "$ref": "#/definitions/dpp.PeerChannelData"
+                "mode": {
+                    "description": "Mode data required by specific payment mode",
+                    "$ref": "#/definitions/hybridmode.PaymentACK"
                 },
-                "tx_id": {
+                "modeId": {
+                    "description": "ModeID the chosen mode.",
+                    "type": "string",
+                    "example": "ef63d9775da5"
+                },
+                "peerChannel": {
+                    "$ref": "#/definitions/hybridmode.PeerChannelData"
+                },
+                "redirectUrl": {
                     "type": "string"
                 }
             }
@@ -238,84 +195,6 @@
             "type": "object",
             "properties": {
                 "paymentID": {
-                    "type": "string"
-                }
-            }
-        },
-        "dpp.PaymentDestinations": {
-            "type": "object",
-            "properties": {
-                "outputs": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/dpp.Output"
-                    }
-                }
-            }
-        },
-        "dpp.PaymentRequest": {
-            "type": "object",
-            "properties": {
-                "creationTimestamp": {
-                    "description": "CreationTimestamp Unix timestamp (seconds since 1-Jan-1970 UTC) when the PaymentRequest was created.\nRequired.",
-                    "type": "string",
-                    "example": "2019-10-12T07:20:50.52Z"
-                },
-                "destinations": {
-                    "description": "Destinations contains supported payment destinations by the merchant and dpp server, initial P2PKH outputs but can be extended.\nRequired.",
-                    "$ref": "#/definitions/dpp.PaymentDestinations"
-                },
-                "expirationTimestamp": {
-                    "description": "ExpirationTimestamp Unix timestamp (UTC) after which the PaymentRequest should be considered invalid.\nOptional.",
-                    "type": "string",
-                    "example": "2019-10-12T07:20:50.52Z"
-                },
-                "fees": {
-                    "description": "FeeRate defines the amount of fees a users wallet should add to the payment\nwhen submitting their final payments.",
-                    "$ref": "#/definitions/bt.FeeQuote"
-                },
-                "memo": {
-                    "description": "Memo Optional note that should be displayed to the customer, explaining what this PaymentRequest is for.\nMaximum length is 50 characters.",
-                    "type": "string",
-                    "example": "invoice number 123456"
-                },
-                "merchantData": {
-                    "description": "MerchantData contains arbitrary data that may be used by the payment host to identify the PaymentRequest.\nMay be omitted if the payment host does not need to associate Payments with PaymentRequest\nor if they associate each PaymentRequest with a separate payment address.\nMaximum length is 10000 characters.",
-                    "$ref": "#/definitions/dpp.Merchant"
-                },
-                "network": {
-                    "description": "Network  Always set to \"bitcoin\" (but seems to be set to 'bitcoin-sv'\noutside bip270 spec, see https://handcash.github.io/handcash-merchant-integration/#/merchant-payments)\n{enum: bitcoin, bitcoin-sv, test}\nRequired.",
-                    "type": "string",
-                    "enum": [
-                        "mainnet",
-                        "testnet",
-                        "stn",
-                        "regtest"
-                    ],
-                    "example": "mainnet"
-                },
-                "paymentUrl": {
-                    "description": "PaymentURL secure HTTPS location where a Payment message (see below) will be sent to obtain a PaymentACK.\nMaximum length is 4000 characters",
-                    "type": "string",
-                    "example": "https://localhost:3443/api/v1/payment/123456"
-                },
-                "spvRequired": {
-                    "description": "SPVRequired if true will expect the sender to submit an SPVEnvelope in the payment request, otherwise\na rawTx will be required.",
-                    "type": "boolean",
-                    "example": true
-                }
-            }
-        },
-        "dpp.PeerChannelData": {
-            "type": "object",
-            "properties": {
-                "channel_id": {
-                    "type": "string"
-                },
-                "host": {
-                    "type": "string"
-                },
-                "token": {
                     "type": "string"
                 }
             }
@@ -336,6 +215,37 @@
                     "type": "string"
                 },
                 "signature": {
+                    "type": "string"
+                }
+            }
+        },
+        "hybridmode.PaymentACK": {
+            "type": "object",
+            "properties": {
+                "peerChannel": {
+                    "$ref": "#/definitions/hybridmode.PeerChannelData"
+                },
+                "transactionIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "hybridmode.PeerChannelData": {
+            "type": "object",
+            "properties": {
+                "channel_id": {
+                    "type": "string"
+                },
+                "host": {
+                    "type": "string"
+                },
+                "path": {
+                    "type": "string"
+                },
+                "token": {
                     "type": "string"
                 }
             }

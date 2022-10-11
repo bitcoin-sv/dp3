@@ -6,6 +6,7 @@ import (
 
 	server "github.com/bitcoin-sv/dpp-proxy"
 	"github.com/bitcoin-sv/dpp-proxy/log"
+	"github.com/bitcoin-sv/dpp-proxy/transports/client_errors"
 	"github.com/labstack/echo/v4"
 	validator "github.com/theflyingcodr/govalidator"
 	"github.com/theflyingcodr/lathos"
@@ -28,26 +29,20 @@ func ErrorHandler(l log.Logger) echo.HTTPErrorHandler {
 		}
 
 		if errors.Is(err, echo.ErrNotFound) {
-			err = errs.NewErrNotFound("404", "Not found")
+			err = client_errors.NewErrNotFound("404", "Not Found")
 		}
 
 		var cErr server.ClientError
 		if errors.As(err, &cErr) {
-			_ = c.JSON(http.StatusInternalServerError, cErr)
+			_ = c.JSON(http.StatusBadRequest, cErr.Message)
 			return
 		}
 
-		// Internal error, log it to a system and return small detail
+		// Internal server error, log it to a system and return small detail
 		if !lathos.IsClientError(err) {
 			internalErr := errs.NewErrInternal(err, "500")
-			l.Error(internalErr, "internal error")
-
-			_ = c.JSON(http.StatusInternalServerError, server.ClientError{
-				ID:      internalErr.ID(),
-				Code:    "500",
-				Title:   "Internal Server Error",
-				Message: internalErr.Error(),
-			})
+			l.Error(internalErr, "Internal Server Error")
+			_ = c.JSON(http.StatusInternalServerError, internalErr.Error())
 			return
 		}
 		var clientErr lathos.ClientError
@@ -59,23 +54,27 @@ func ErrorHandler(l log.Logger) echo.HTTPErrorHandler {
 			Message: clientErr.Detail(),
 		}
 		if lathos.IsNotFound(err) {
-			_ = c.JSON(http.StatusNotFound, resp)
+			_ = c.JSON(http.StatusNotFound, resp.Message)
 			return
 		}
 		if lathos.IsDuplicate(err) {
-			_ = c.JSON(http.StatusConflict, resp)
+			_ = c.JSON(http.StatusConflict, resp.Message)
 			return
 		}
 		if lathos.IsNotAuthenticated(err) {
-			_ = c.JSON(http.StatusUnauthorized, resp)
+			_ = c.JSON(http.StatusUnauthorized, resp.Message)
 			return
 		}
 		if lathos.IsNotAuthorised(err) {
-			_ = c.JSON(http.StatusForbidden, resp)
+			_ = c.JSON(http.StatusForbidden, resp.Message)
 			return
 		}
 		if lathos.IsCannotProcess(err) {
-			_ = c.JSON(http.StatusUnprocessableEntity, resp)
+			_ = c.JSON(http.StatusUnprocessableEntity, resp.Message)
+			return
+		}
+		if lathos.IsBadRequest(err) {
+			_ = c.JSON(http.StatusBadRequest, resp.Message)
 			return
 		}
 	}

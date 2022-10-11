@@ -8,26 +8,27 @@ import (
 	"github.com/theflyingcodr/sockets/server"
 )
 
-type paymentRequest struct {
+
+type paymentTerms struct {
 }
 
-// NewPaymentRequest will setup a new instance of a paymentRequest handler.
-func NewPaymentRequest() *paymentRequest {
-	return &paymentRequest{}
+// NewPaymentTerms will setup a new instance of a paymentTerms handler.
+func NewPaymentTerms() *paymentTerms {
+	return &paymentTerms{}
 }
 
 // Register will register new handler/s with the socket server.
-func (p *paymentRequest) Register(s *server.SocketServer) {
-	s.RegisterChannelHandler("paymentrequest.create", p.buildPaymentRequest)
-	s.RegisterChannelHandler("paymentrequest.response", p.paymentRequestResponse)
+func (p *paymentTerms) Register(s *server.SocketServer) {
+	s.RegisterChannelHandler("paymentterms.create", p.buildPaymentTerms)
+	s.RegisterChannelHandler("paymentterms.response", p.paymentTermsResponse)
 }
 
-// buildPaymentRequest will forward a paymentrequest message to all connected clients.
-func (p *paymentRequest) buildPaymentRequest(ctx context.Context, msg *sockets.Message) (*sockets.Message, error) {
+// buildPaymentTerms will forward a paymentterms.create message to all connected clients.
+func (p *paymentTerms) buildPaymentTerms(ctx context.Context, msg *sockets.Message) (*sockets.Message, error) {
 	return msg, nil
 }
 
-// buildPaymentRequest will forward a paymentrequest.response message to all connected clients.
-func (p *paymentRequest) paymentRequestResponse(ctx context.Context, msg *sockets.Message) (*sockets.Message, error) {
+// buildPaymentTerms will forward a paymentterms.response message to all connected clients.
+func (p *paymentTerms) paymentTermsResponse(ctx context.Context, msg *sockets.Message) (*sockets.Message, error) {
 	return msg, nil
 }

@@ -65,7 +65,7 @@ vendor-deps:
 	@go mod tidy && go mod vendor
 
 install-swagger-gen:
-	@go get github.com/swaggo/swag/cmd/swag
+	@go install github.com/swaggo/swag/cmd/swag@v1.8.4
 
 generate-swagger:
 	@swag init --parseVendor --parseDependency --parseInternal -g ./cmd/server/main.go

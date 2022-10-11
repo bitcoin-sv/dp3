@@ -6,7 +6,7 @@ import validator "github.com/theflyingcodr/govalidator"
 func (c *Config) Validate() error {
 	v := validator.New()
 	if c.Transports != nil {
-		v = v.Validate("transport.mode", validator.AnyString(c.Transports.Mode, TransportModeHTTP, TransportModeHybrid, TransportModeSocket))
+		v = v.Validate("transport.mode", validator.AnyString(c.Transports.Mode, TransportModeHybrid, TransportModeSocket))
 	}
 
 	return v.Err()

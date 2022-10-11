@@ -1,47 +1,4 @@
 definitions:
-  bt.FeeQuote:
-    type: object
-  dpp.Merchant:
-    properties:
-      address:
-        description: Address is the merchants store / head office address.
-        example: 1 the street, the town, B1 1AA
-        type: string
-      avatar:
-        description: AvatarURL displays a canonical url to a merchants avatar.
-        example: http://url.com
-        type: string
-      email:
-        description: Email can be sued to contact the merchant about this transaction.
-        example: merchant@m.com
-        type: string
-      extendedData:
-        additionalProperties: true
-        description: ExtendedData can be supplied if the merchant wishes to send some
-          arbitrary data back to the wallet.
-        type: object
-      name:
-        description: Name is a human readable string identifying the merchant.
-        example: merchant 1
-        type: string
-    type: object
-  dpp.Output:
-    properties:
-      amount:
-        description: Amount is the number of satoshis to be paid.
-        example: 100000
-        type: integer
-      description:
-        description: Description, an optional description such as "tip" or "sales
-          tax". Maximum length is 100 chars.
-        example: paymentReference 123456
-        type: string
-      script:
-        description: Script is a locking script where payment should be sent, formatted
-          as a hexadecimal string.
-        example: 76a91455b61be43392125d127f1780fb038437cd67ef9c88ac
-        type: string
-    type: object
   dpp.PaymentACK:
     properties:
       error:
@@ -51,97 +8,28 @@ definitions:
           it is recommended only to use “1” and to fill the memo with a textual explanation about why
           the transaction was not accepted until further numbers are defined and standardised.
         type: integer
-      id:
-        type: string
       memo:
+        description: |-
+          Memo may contain information about why there was an error. This field is poorly defined until
+          error reporting is more standardised.
         type: string
-      peer_channel:
-        $ref: '#/definitions/dpp.PeerChannelData'
-      tx_id:
+      mode:
+        $ref: '#/definitions/hybridmode.PaymentACK'
+        description: Mode data required by specific payment mode
+      modeId:
+        description: ModeID the chosen mode.
+        example: ef63d9775da5
         type: string
+      peerChannel:
+        $ref: '#/definitions/hybridmode.PeerChannelData'
+      redirectUrl:
+        type: string
+    required:
+    - modeId
     type: object
   dpp.PaymentCreateArgs:
     properties:
       paymentID:
-        type: string
-    type: object
-  dpp.PaymentDestinations:
-    properties:
-      outputs:
-        items:
-          $ref: '#/definitions/dpp.Output'
-        type: array
-    type: object
-  dpp.PaymentRequest:
-    properties:
-      creationTimestamp:
-        description: |-
-          CreationTimestamp Unix timestamp (seconds since 1-Jan-1970 UTC) when the PaymentRequest was created.
-          Required.
-        example: "2019-10-12T07:20:50.52Z"
-        type: string
-      destinations:
-        $ref: '#/definitions/dpp.PaymentDestinations'
-        description: |-
-          Destinations contains supported payment destinations by the merchant and dpp server, initial P2PKH outputs but can be extended.
-          Required.
-      expirationTimestamp:
-        description: |-
-          ExpirationTimestamp Unix timestamp (UTC) after which the PaymentRequest should be considered invalid.
-          Optional.
-        example: "2019-10-12T07:20:50.52Z"
-        type: string
-      fees:
-        $ref: '#/definitions/bt.FeeQuote'
-        description: |-
-          FeeRate defines the amount of fees a users wallet should add to the payment
-          when submitting their final payments.
-      memo:
-        description: |-
-          Memo Optional note that should be displayed to the customer, explaining what this PaymentRequest is for.
-          Maximum length is 50 characters.
-        example: invoice number 123456
-        type: string
-      merchantData:
-        $ref: '#/definitions/dpp.Merchant'
-        description: |-
-          MerchantData contains arbitrary data that may be used by the payment host to identify the PaymentRequest.
-          May be omitted if the payment host does not need to associate Payments with PaymentRequest
-          or if they associate each PaymentRequest with a separate payment address.
-          Maximum length is 10000 characters.
-      network:
-        description: |-
-          Network  Always set to "bitcoin" (but seems to be set to 'bitcoin-sv'
-          outside bip270 spec, see https://handcash.github.io/handcash-merchant-integration/#/merchant-payments)
-          {enum: bitcoin, bitcoin-sv, test}
-          Required.
-        enum:
-        - mainnet
-        - testnet
-        - stn
-        - regtest
-        example: mainnet
-        type: string
-      paymentUrl:
-        description: |-
-          PaymentURL secure HTTPS location where a Payment message (see below) will be sent to obtain a PaymentACK.
-          Maximum length is 4000 characters
-        example: https://localhost:3443/api/v1/payment/123456
-        type: string
-      spvRequired:
-        description: |-
-          SPVRequired if true will expect the sender to submit an SPVEnvelope in the payment request, otherwise
-          a rawTx will be required.
-        example: true
-        type: boolean
-    type: object
-  dpp.PeerChannelData:
-    properties:
-      channel_id:
-        type: string
-      host:
-        type: string
-      token:
         type: string
     type: object
   envelope.JSONEnvelope:
@@ -155,6 +43,26 @@ definitions:
       publicKey:
         type: string
       signature:
+        type: string
+    type: object
+  hybridmode.PaymentACK:
+    properties:
+      peerChannel:
+        $ref: '#/definitions/hybridmode.PeerChannelData'
+      transactionIds:
+        items:
+          type: string
+        type: array
+    type: object
+  hybridmode.PeerChannelData:
+    properties:
+      channel_id:
+        type: string
+      host:
+        type: string
+      path:
+        type: string
+      token:
         type: string
     type: object
   server.ClientError:
@@ -199,10 +107,9 @@ paths:
       - application/json
       responses:
         "201":
-          description: contains outputs, merchant data and expiry information, used
-            by the payee to construct a transaction
+          description: contains the signed PaymentTerms
           schema:
-            $ref: '#/definitions/dpp.PaymentRequest'
+            $ref: '#/definitions/envelope.JSONEnvelope'
         "400":
           description: returned if the user input is invalid, usually an issue with
             the paymentID
@@ -283,7 +190,7 @@ paths:
       - application/json
       responses:
         "201":
-          description: ""
+          description: Created
       summary: InvoiceCreate proof
       tags:
       - Proofs

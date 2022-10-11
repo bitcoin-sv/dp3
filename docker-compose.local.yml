@@ -6,9 +6,3 @@ services:
     image: local.dpp
     environment:
       SOCKET_CHANNEL_TIMEOUTSECONDS: 120
-
-  dpp-merchant:
-    container_name: dpp-merchant
-    image: local.dpp
-    environment:
-      SOCKET_CHANNEL_TIMEOUTSECONDS: 120
