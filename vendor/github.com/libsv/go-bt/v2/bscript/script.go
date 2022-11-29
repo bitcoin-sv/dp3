@@ -227,23 +227,46 @@ func (s *Script) String() string {
 
 // ToASM returns the string ASM opcodes of the script.
 func (s *Script) ToASM() (string, error) {
+	if s == nil || len(*s) == 0 {
+		return "", nil
+	}
 	parts, err := DecodeParts(*s)
 	// if err != nil, we will append [error] to the ASM script below (as done in the node).
 
-	var asmScript string
+	data := false
+	if len(*s) > 1 && ((*s)[0] == OpRETURN || ((*s)[0] == OpFALSE && (*s)[1] == OpRETURN)) {
+		data = true
+	}
+
+	var asm strings.Builder
+
 	for _, p := range parts {
+		asm.WriteRune(' ')
 		if len(p) == 1 {
-			asmScript = asmScript + " " + opCodeValues[p[0]]
+			if data && p[0] != 0x6a {
+				asm.WriteString(fmt.Sprintf("%d", p[0]))
+			} else {
+				asm.WriteString(opCodeValues[p[0]])
+			}
 		} else {
-			asmScript = asmScript + " " + hex.EncodeToString(p)
+			if data && len(p) <= 4 {
+				b := make([]byte, 0)
+				b = append(b, p...)
+				for i := 0; i < 4-len(p); i++ {
+					b = append(b, 0)
+				}
+				asm.WriteString(fmt.Sprintf("%d", binary.LittleEndian.Uint32(b)))
+			} else {
+				asm.WriteString(hex.EncodeToString(p))
+			}
 		}
 	}
 
 	if err != nil {
-		asmScript += " [error]"
+		asm.WriteString(" [error]")
 	}
 
-	return strings.TrimSpace(asmScript), nil
+	return asm.String()[1:], nil
 }
 
 // IsP2PKH returns true if this is a pay to pubkey hash output script.
@@ -318,7 +341,7 @@ func (s *Script) IsMultiSigOut() bool {
 		}
 	}
 
-	return isSmallIntOp(parts[len(parts)-2][0]) &&
+	return len(parts[len(parts)-2]) > 0 && isSmallIntOp(parts[len(parts)-2][0]) && len(parts[len(parts)-1]) > 0 &&
 		parts[len(parts)-1][0] == OpCHECKMULTISIG
 }
 
@@ -332,7 +355,7 @@ func (s *Script) PublicKeyHash() ([]byte, error) {
 		return nil, ErrEmptyScript
 	}
 
-	if (*s)[0] != OpDUP || (*s)[1] != OpHASH160 {
+	if (*s)[0] != OpDUP || len(*s) <= 2 || (*s)[1] != OpHASH160 {
 		return nil, ErrNotP2PKH
 	}
 
